@@ -292,6 +292,11 @@ textarea.fc{resize:vertical;min-height:72px}
             <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><input type="tel" id="fPhone" class="fc" placeholder="0812345678"></div>
             <div class="fg"><label class="fl">อีเมล</label><input type="email" id="fEmail" class="fc" placeholder="example@email.com"></div>
           </div>
+          <div class="r3" style="grid-template-columns:1fr 2fr 2fr">
+            <div class="fg"><label class="fl">เกรดเฉลี่ย (GPA)</label><input type="number" step="0.01" min="0" max="4" id="fGpa" class="fc" placeholder="3.50"></div>
+            <div class="fg"><label class="fl">สาขาวิชา</label><input type="text" id="fMajor" class="fc" placeholder="เช่น วิศวกรรมคอมพิวเตอร์"></div>
+            <div class="fg"><label class="fl">มหาวิทยาลัย/สถาบัน</label><input type="text" id="fUni" class="fc" placeholder="ชื่อมหาวิทยาลัย"></div>
+          </div>
           <div class="r2">
             <div class="fg"><label class="fl">วันที่สัมภาษณ์<span class="req">*</span></label><input type="date" id="fDate" class="fc"></div>
             <div class="fg">
@@ -924,6 +929,7 @@ function saveIv(){
   const rec={
     id:eid||gid(),name,phone:document.getElementById('fPhone').value.trim(),
     email:document.getElementById('fEmail').value.trim(),position:pos,date,interviewer:itv,
+    gpa:document.getElementById('fGpa').value.trim(),major:document.getElementById('fMajor').value.trim(),uni:document.getElementById('fUni').value.trim(),
     gs:{...gS},ss:{...sS},as:{...aS},
     hq:HQ.map((q,i)=>({q,val:hqS[i].val,note:hqS[i].note})),
     cq:CQ.map((q,i)=>({q,val:cqS[i].val,note:cqS[i].note})),
@@ -943,7 +949,7 @@ function saveIv(){
 
 function resetForm(){
   eid=null;
-  ['fName','fPhone','fEmail','fStrong','fImprove','fSuper','fHR'].forEach(id=>document.getElementById(id).value='');
+  ['fName','fPhone','fEmail','fGpa','fMajor','fUni','fStrong','fImprove','fSuper','fHR'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fItv').value='';
   document.getElementById('fPos').value='';
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
@@ -970,6 +976,9 @@ function editIv(id){
     document.getElementById('fName').value=iv.name;
     document.getElementById('fPhone').value=iv.phone||'';
     document.getElementById('fEmail').value=iv.email||'';
+    document.getElementById('fGpa').value=iv.gpa||'';
+    document.getElementById('fMajor').value=iv.major||'';
+    document.getElementById('fUni').value=iv.uni||'';
     document.getElementById('fPos').value=iv.position;
     document.getElementById('fDate').value=iv.date;
     document.getElementById('fItv').value=iv.interviewer||'';
@@ -1109,6 +1118,7 @@ function showDet(id){
       '<div style="text-align:center"><div style="font-size:44px;font-weight:800;line-height:1">'+i.score.toFixed(1)+'</div><div style="opacity:.7;font-size:12px">คะแนนรวม (%)</div>'+(i.ovr?'<div style="font-size:10.5px;background:rgba(255,165,0,.3);padding:2px 8px;border-radius:10px;margin-top:5px">⚡ Override</div>':'')+'</div>'+
     '</div>'+
     '<div class="dg"><div class="di"><label>เบอร์โทร</label><p>'+(i.phone||'—')+'</p></div><div class="di"><label>อีเมล</label><p>'+(i.email||'—')+'</p></div><div class="di"><label>วันที่สัมภาษณ์</label><p>'+fd(i.date)+'</p></div><div class="di"><label>ผู้สัมภาษณ์</label><p>'+i.interviewer+'</p></div></div>'+
+    '<div class="dg" style="margin-top:12px"><div class="di"><label>เกรดเฉลี่ย (GPA)</label><p>'+(i.gpa||'—')+'</p></div><div class="di"><label>สาขาวิชา</label><p>'+(i.major||'—')+'</p></div><div class="di"><label>มหาวิทยาลัย</label><p>'+(i.uni||'—')+'</p></div></div>'+
     (gR?'<div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--pd);font-size:13px">📊 คะแนนหมวดกลาง</div>'+gR+'</div>':'')+
     (Object.keys(i.ss).length>0?'<div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--pd);font-size:13px">🎯 คะแนนหมวดเฉพาะตำแหน่ง</div>'+sR+'</div>':'')+
     (aR?'<div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:#5b21b6;font-size:13px">🧠 คะแนนหมวดทัศนคติ</div>'+aR+'</div>':'')+
@@ -1177,11 +1187,11 @@ function exportJSON(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hr_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();toast('Export JSON สำเร็จ');
 }
 function exportCSV(){
-  const hdr=['ลำดับ','ชื่อ-นามสกุล','เบอร์โทร','อีเมล','ตำแหน่ง','วันที่สัมภาษณ์','ผู้สัมภาษณ์','คะแนนรวม','ผล','Override','ปัญหาสุขภาพ','ติดเงื่อนไข','จุดเด่น','จุดที่ต้องพัฒนา','ความคิดเห็น HR'];
+  const hdr=['ลำดับ','ชื่อ-นามสกุล','เบอร์โทร','อีเมล','GPA','สาขาวิชา','มหาวิทยาลัย','ตำแหน่ง','วันที่สัมภาษณ์','ผู้สัมภาษณ์','คะแนนรวม','ผล','Override','ปัญหาสุขภาพ','ติดเงื่อนไข','จุดเด่น','จุดที่ต้องพัฒนา','ความคิดเห็น HR'];
   const rows=DB.iv.map((i,idx)=>{
     const hiss=(i.hq||[]).filter(x=>x.val==='iss').map(x=>x.q).join('; ');
     const ciss=(i.cq||[]).filter(x=>x.val==='iss').map(x=>x.q).join('; ');
-    return [idx+1,i.name,i.phone||'',i.email||'',i.position,fd(i.date),i.interviewer,i.score.toFixed(1)+'%',i.result,i.ovr||'',hiss||'ไม่มี',ciss||'ไม่มี',i.strong||'',i.improve||'',i.hr||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"');
+    return [idx+1,i.name,i.phone||'',i.email||'',i.gpa||'',i.major||'',i.uni||'',i.position,fd(i.date),i.interviewer,i.score.toFixed(1)+'%',i.result,i.ovr||'',hiss||'ไม่มี',ciss||'ไม่มี',i.strong||'',i.improve||'',i.hr||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"');
   });
   const csv='\uFEFF'+[hdr.join(','),...rows.map(r=>r.join(','))].join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
@@ -1210,14 +1220,14 @@ function importJSON(){
 // EMAIL
 // ═══════════════════════════════════════════════
 const ET={
-  'ผ่าน':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] ผ่านการสัมภาษณ์ตำแหน่ง'+p,body:(n,p,d,sc)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nบริษัทมีความยินดีแจ้งว่า คุณ'+n+' ผ่านการสัมภาษณ์ตำแหน่ง'+p+' เรียบร้อยแล้ว\nผลการสัมภาษณ์: ✅ ผ่าน (คะแนน '+sc+'%)\nวันที่สัมภาษณ์: '+d+'\n\nทางบริษัทจะติดต่อกลับเพื่อแจ้งรายละเอียดการเริ่มงานภายใน 3-5 วันทำการ\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'},
-  'ผ่านแบบมีเงื่อนไข':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] ผ่านแบบมีเงื่อนไข ตำแหน่ง'+p,body:(n,p,d,sc)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nผลการสัมภาษณ์: 📋 ผ่านแบบมีเงื่อนไข (คะแนน '+sc+'%)\nตำแหน่ง: '+p+'\nวันที่: '+d+'\n\nทางบริษัทจะแจ้งรายละเอียดเงื่อนไขเพิ่มเติมและติดต่อกลับภายใน 5-7 วันทำการ\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'},
-  'ติดสำรอง':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] บันทึกใน Talent Pool ตำแหน่ง'+p,body:(n,p,d,sc)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nผลการสัมภาษณ์: 🔵 ติดสำรอง (คะแนน '+sc+'%)\nตำแหน่ง: '+p+'\nวันที่: '+d+'\n\nบริษัทได้บันทึกข้อมูลไว้ใน Talent Pool และจะติดต่อเมื่อมีตำแหน่งว่างที่เหมาะสม\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'},
-  'ไม่ผ่าน':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] ผลการพิจารณาตำแหน่ง'+p,body:(n,p,d,sc)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nด้วยความเสียใจ ทางบริษัทขอแจ้งว่าคุณสมบัติยังไม่ตรงกับความต้องการในขณะนี้\n\nขอขอบคุณที่ให้ความสนใจ และขอให้ประสบความสำเร็จในโอกาสถัดไป\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'}
+  'ผ่าน':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] ผ่านการสัมภาษณ์ตำแหน่ง'+p,body:(n,p,d)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nบริษัทมีความยินดีแจ้งว่า คุณ'+n+' ผ่านการสัมภาษณ์ตำแหน่ง'+p+' เรียบร้อยแล้ว\nผลการสัมภาษณ์: ✅ ผ่าน\nวันที่สัมภาษณ์: '+d+'\n\nทางบริษัทจะติดต่อกลับเพื่อแจ้งรายละเอียดการเริ่มงานภายใน 3-5 วันทำการ\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'},
+  'ผ่านแบบมีเงื่อนไข':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] ผ่านแบบมีเงื่อนไข ตำแหน่ง'+p,body:(n,p,d)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nผลการสัมภาษณ์: 📋 ผ่านแบบมีเงื่อนไข\nตำแหน่ง: '+p+'\nวันที่: '+d+'\n\nทางบริษัทจะแจ้งรายละเอียดเงื่อนไขเพิ่มเติมและติดต่อกลับภายใน 5-7 วันทำการ\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'},
+  'ติดสำรอง':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] บันทึกใน Talent Pool ตำแหน่ง'+p,body:(n,p,d)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nผลการสัมภาษณ์: 🔵 ติดสำรอง\nตำแหน่ง: '+p+'\nวันที่: '+d+'\n\nบริษัทได้บันทึกข้อมูลไว้ใน Talent Pool และจะติดต่อเมื่อมีตำแหน่งว่างที่เหมาะสม\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'},
+  'ไม่ผ่าน':{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] ผลการพิจารณาตำแหน่ง'+p,body:(n,p,d)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์กับทางบริษัท\n\nด้วยความเสียใจ ทางบริษัทขอแจ้งว่าคุณสมบัติยังไม่ตรงกับความต้องการในขณะนี้\n\nขอขอบคุณที่ให้ความสนใจ และขอให้ประสบความสำเร็จในโอกาสถัดไป\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'}
 };
 function getEmailTpl(r){
   if(ET[r])return ET[r];
-  return{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] สถานะ: '+r+' ตำแหน่ง'+p,body:(n,p,d,sc)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์\n\nผลการสัมภาษณ์: '+r+' (คะแนน '+sc+'%)\nตำแหน่ง: '+p+'\nวันที่: '+d+'\n\nทางบริษัทจะติดต่อกลับเพื่อแจ้งรายละเอียดเพิ่มเติม\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'};
+  return{subj:(n,p)=>'[แจ้งผลสัมภาษณ์] สถานะ: '+r+' ตำแหน่ง'+p,body:(n,p,d)=>'เรียน คุณ'+n+'\n\nขอขอบคุณที่สละเวลาเข้าสัมภาษณ์\n\nผลการสัมภาษณ์: '+r+'\nตำแหน่ง: '+p+'\nวันที่: '+d+'\n\nทางบริษัทจะติดต่อกลับเพื่อแจ้งรายละเอียดเพิ่มเติม\n\nขอแสดงความนับถือ\nฝ่ายทรัพยากรบุคคล'};
 }
 function rEmailSel(){
   syncStatusDropdowns();
@@ -1234,7 +1244,7 @@ function prevEmail(){
   const r=effR(i);const tpl=getEmailTpl(r);
   document.getElementById('eTo').value=i.email||'';
   document.getElementById('eSubj').value=tpl.subj(i.name,i.position);
-  document.getElementById('eBody').textContent=tpl.body(i.name,i.position,fd(i.date),i.score.toFixed(1));
+  document.getElementById('eBody').textContent=tpl.body(i.name,i.position,fd(i.date));
   document.getElementById('eSection').style.display='block';
 }
 function swTab(tab){
@@ -1292,7 +1302,7 @@ function openBulkModal(){
         '<span style="font-weight:700;font-size:13px">'+(idx+1)+'. '+i.name+'</span>'+bdg(r)+
         (i.email?'<span style="font-size:11px;color:var(--p);margin-left:auto">📧 '+i.email+'</span>':'<span style="font-size:11px;color:#dc2626;margin-left:auto">✗ ไม่มีอีเมล</span>')+
       '</div>'+
-      '<div style="padding:9px 13px"><div style="font-size:11px;color:var(--tx3);margin-bottom:2px">หัวข้อ:</div><div style="font-size:12.5px;font-weight:600;margin-bottom:5px">'+tpl.subj(i.name,i.position)+'</div><div style="font-size:12px;color:var(--tx2);white-space:pre-wrap;max-height:60px;overflow:hidden;background:var(--bg);padding:7px;border-radius:5px">'+tpl.body(i.name,i.position,fd(i.date),i.score.toFixed(1)).substring(0,200)+'...</div></div>'+
+      '<div style="padding:9px 13px"><div style="font-size:11px;color:var(--tx3);margin-bottom:2px">หัวข้อ:</div><div style="font-size:12.5px;font-weight:600;margin-bottom:5px">'+tpl.subj(i.name,i.position)+'</div><div style="font-size:12px;color:var(--tx2);white-space:pre-wrap;max-height:60px;overflow:hidden;background:var(--bg);padding:7px;border-radius:5px">'+tpl.body(i.name,i.position,fd(i.date)).substring(0,200)+'...</div></div>'+
     '</div>';
   }).join('');
   openM('bulkMod');
@@ -1304,7 +1314,7 @@ function sendBulkEmails(){
   function openNext(){
     if(idx>=items.length)return;
     const iv=items[idx++];const r=effR(iv);const tpl=getEmailTpl(r);
-    window.open('mailto:'+iv.email+'?subject='+encodeURIComponent(tpl.subj(iv.name,iv.position))+'&body='+encodeURIComponent(tpl.body(iv.name,iv.position,fd(iv.date),iv.score.toFixed(1))),'_blank');
+    window.open('mailto:'+iv.email+'?subject='+encodeURIComponent(tpl.subj(iv.name,iv.position))+'&body='+encodeURIComponent(tpl.body(iv.name,iv.position,fd(iv.date))),'_blank');
     if(idx<items.length)setTimeout(openNext,700);
   }
   openNext();toast('เปิด Email Client '+items.length+' รายการ');closeM('bulkMod');
