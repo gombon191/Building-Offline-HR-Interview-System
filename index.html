@@ -613,6 +613,7 @@ const DEF_ITV=[{name:'ฝ่ายทรัพยากรบุคคล',role:
 function parseDB(d) {
   try {
     const p = typeof d==='string'? JSON.parse(d) : d;
+    if (!p.iv) p.iv=[];
     if (!p.pos) p.pos=[...DP];
     if (!p.sq) p.sq=JSON.parse(JSON.stringify(DS));
     if (!p.itv) p.itv=JSON.parse(JSON.stringify(DEF_ITV));
@@ -639,7 +640,7 @@ async function loadDB() {
         }
         toast('ซิงค์ข้อมูลจาก Cloud สำเร็จ');
         updateSyncStat('online');
-        init();
+        refreshUI();
         if(!data.iv) saveDB(); // Push local data to empty cloud
       }
     } catch(e) {
@@ -700,6 +701,24 @@ function updateSyncStat(s) {
   else if(s==='syncing') el.innerHTML = 'สถานะ: <span style="color:#d97706">🟡 กำลังซิงค์ข้อมูล...</span>';
   else if(s==='error') el.innerHTML = 'สถานะ: <span style="color:#dc2626">🔴 เชื่อมต่อล้มเหลว (ใช้ออฟไลน์ชั่วคราว)</span>';
   else el.innerHTML = 'สถานะ: ⚪ ไม่ได้เชื่อมต่อ (ทำงานแบบ Offline)';
+}
+
+function refreshUI() {
+  rDash();
+  filterPool();
+  rSettings();
+  syncStatusDropdowns();
+  renderBulkList();
+  if(!document.getElementById('fName').value) {
+    initForm();
+  } else {
+    // Just refresh dropdowns
+    const psel=document.getElementById('fPos');
+    const oldV = psel.value;
+    psel.innerHTML='<option value="">-- เลือกตำแหน่ง --</option>'+DB.pos.map(p=>'<option value="'+p+'">'+p+'</option>').join('');
+    psel.value = oldV;
+    initItvSel();
+  }
 }
 
 // ═══════════════════════════════════════════════
