@@ -528,6 +528,18 @@ textarea.fc{resize:vertical;min-height:72px}
         </div>
       </div>
       <div class="card" style="margin-top:18px">
+        <div class="ch"><span class="ctit">☁️ ตั้งค่า Cloud Sync (Google Sheets)</span></div>
+        <div class="ct2">
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:12px">นำ Web App URL จาก Google Apps Script มาใส่เพื่อเปิดใช้งานการบันทึกข้อมูลออนไลน์ (Online Database)</p>
+          <div style="display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+            <input type="text" id="syncUrl" class="fc" placeholder="https://script.google.com/macros/s/..." style="flex:1;min-width:200px">
+            <button class="btn bp" onclick="saveSyncUrl()">💾 บันทึก &amp; ซิงค์</button>
+            <button class="btn bd2" onclick="clearSyncUrl()">ปิดใช้งาน</button>
+          </div>
+          <div id="syncStat" style="font-size:11.5px;font-weight:700;color:var(--tx3)">สถานะ: ⚪ ไม่ได้เชื่อมต่อ (ทำงานแบบ Offline)</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px">
         <div class="ch"><span class="ctit">ℹ️ ข้อมูลระบบ</span></div>
         <div class="ct2">
           <div class="r3">
@@ -598,23 +610,94 @@ const DEF_ITV=[{name:'ฝ่ายทรัพยากรบุคคล',role:
 // ═══════════════════════════════════════════════
 // DB
 // ═══════════════════════════════════════════════
-function loadDB() {
+function parseDB(d) {
   try {
-    const d = localStorage.getItem('hrDB');
-    if (!d) return { iv:[], pos:[...DP], sq:JSON.parse(JSON.stringify(DS)), itv:JSON.parse(JSON.stringify(DEF_ITV)), st:[] };
-    const p = JSON.parse(d);
+    const p = typeof d==='string'? JSON.parse(d) : d;
     if (!p.pos) p.pos=[...DP];
     if (!p.sq) p.sq=JSON.parse(JSON.stringify(DS));
     if (!p.itv) p.itv=JSON.parse(JSON.stringify(DEF_ITV));
     if (!p.st) p.st=[];
     return p;
-  } catch(e) {
-    return { iv:[], pos:[...DP], sq:JSON.parse(JSON.stringify(DS)), itv:JSON.parse(JSON.stringify(DEF_ITV)), st:[] };
+  } catch(e) { return { iv:[], pos:[...DP], sq:JSON.parse(JSON.stringify(DS)), itv:JSON.parse(JSON.stringify(DEF_ITV)), st:[] }; }
+}
+
+let DB = { iv:[], pos:[...DP], sq:JSON.parse(JSON.stringify(DS)), itv:JSON.parse(JSON.stringify(DEF_ITV)), st:[] };
+let SYNC_URL = localStorage.getItem('hrSyncUrl') || '';
+
+async function loadDB() {
+  const local = localStorage.getItem('hrDB');
+  if (local) DB = parseDB(local);
+  if (SYNC_URL) {
+    try {
+      updateSyncStat('syncing');
+      const res = await fetch(SYNC_URL + '?action=get');
+      const data = await res.json();
+      if(data && data.iv) {
+        DB = parseDB(data);
+        localStorage.setItem('hrDB', JSON.stringify(DB));
+        toast('ซิงค์ข้อมูลจาก Cloud สำเร็จ');
+        updateSyncStat('online');
+        init();
+      }
+    } catch(e) {
+      toast('ไม่สามารถเชื่อมต่อ Cloud ได้ (Offline Mode)','w');
+      updateSyncStat('error');
+    }
+  } else {
+    updateSyncStat('offline');
   }
 }
-function saveDB() { localStorage.setItem('hrDB', JSON.stringify(DB)); }
-function gid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-let DB = loadDB();
+
+async function saveDB() { 
+  localStorage.setItem('hrDB', JSON.stringify(DB)); 
+  if (SYNC_URL) {
+    try {
+      updateSyncStat('syncing');
+      toast('กำลังบันทึกข้อมูลขึ้น Cloud...');
+      const res = await fetch(SYNC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(DB)
+      });
+      const resData = await res.json();
+      if(resData.status === 'success') {
+         toast('บันทึกข้อมูลขึ้น Cloud สำเร็จ');
+         updateSyncStat('online');
+      } else {
+         toast('บันทึกข้อมูลขึ้น Cloud ไม่สำเร็จ', 'e');
+         updateSyncStat('error');
+      }
+    } catch(e) {
+      toast('เชื่อมต่อ Cloud ล้มเหลว', 'e');
+      updateSyncStat('error');
+    }
+  }
+}
+
+function saveSyncUrl() {
+  const v = document.getElementById('syncUrl').value.trim();
+  if(!v) { toast('กรุณาใส่ Web App URL','e'); return; }
+  SYNC_URL = v;
+  localStorage.setItem('hrSyncUrl', v);
+  toast('บันทึก URL แล้ว กำลังซิงค์...');
+  loadDB();
+}
+
+function clearSyncUrl() {
+  SYNC_URL = '';
+  localStorage.removeItem('hrSyncUrl');
+  document.getElementById('syncUrl').value = '';
+  updateSyncStat('offline');
+  toast('ปิดใช้งาน Cloud Sync แล้ว');
+}
+
+function updateSyncStat(s) {
+  const el = document.getElementById('syncStat'); if(!el) return;
+  if(s==='online') el.innerHTML = 'สถานะ: <span style="color:#16a34a">🟢 เชื่อมต่อแล้ว (Online)</span>';
+  else if(s==='syncing') el.innerHTML = 'สถานะ: <span style="color:#d97706">🟡 กำลังซิงค์ข้อมูล...</span>';
+  else if(s==='error') el.innerHTML = 'สถานะ: <span style="color:#dc2626">🔴 เชื่อมต่อล้มเหลว (ใช้ออฟไลน์ชั่วคราว)</span>';
+  else el.innerHTML = 'สถานะ: ⚪ ไม่ได้เชื่อมต่อ (ทำงานแบบ Offline)';
+}
 
 // ═══════════════════════════════════════════════
 // HELPERS
@@ -1348,12 +1431,19 @@ function cfmClear(){
 // ═══════════════════════════════════════════════
 function init(){
   document.getElementById('todayTxt').textContent=today();
+  const su = document.getElementById('syncUrl');
+  if(su) su.value = SYNC_URL;
   initForm();
   syncStatusDropdowns();
   renderBulkList();
   rDash();
 }
+
+// Boot Sequence
+const local = localStorage.getItem('hrDB');
+if (local) DB = parseDB(local);
 init();
+loadDB(); // Trigger background sync
 </script>
 </body>
 </html>
