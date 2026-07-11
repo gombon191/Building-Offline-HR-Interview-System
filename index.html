@@ -632,12 +632,15 @@ async function loadDB() {
       updateSyncStat('syncing');
       const res = await fetch(SYNC_URL + '?action=get');
       const data = await res.json();
-      if(data && data.iv) {
-        DB = parseDB(data);
-        localStorage.setItem('hrDB', JSON.stringify(DB));
+      if(data) {
+        if(data.iv) {
+          DB = parseDB(data);
+          localStorage.setItem('hrDB', JSON.stringify(DB));
+        }
         toast('ซิงค์ข้อมูลจาก Cloud สำเร็จ');
         updateSyncStat('online');
         init();
+        if(!data.iv) saveDB(); // Push local data to empty cloud
       }
     } catch(e) {
       toast('ไม่สามารถเชื่อมต่อ Cloud ได้ (Offline Mode)','w');
